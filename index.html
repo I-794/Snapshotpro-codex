@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapshotPro Studio</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0d1117;
+      --panel: #161b22;
+      --panel-alt: #1f2630;
+      --accent: #58a6ff;
+      --accent-soft: rgba(88, 166, 255, 0.14);
+      --text-primary: #f0f6fc;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --border: rgba(240, 246, 252, 0.1);
+      --input-bg: rgba(22, 27, 34, 0.7);
+      --input-hover: rgba(33, 41, 54, 0.85);
+      --shadow-strong: 0 40px 80px rgba(0, 0, 0, 0.45);
+      --shadow-soft: 0 20px 40px rgba(15, 23, 42, 0.4);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --transition: 160ms ease;
+      --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--background);
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: minmax(360px, 460px) 1fr;
+      gap: 0;
+      min-height: 100vh;
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, rgba(88, 166, 255, 0.08), transparent 55%),
+        var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 28px 30px 24px 30px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(88, 166, 255, 0.4) rgba(22, 27, 34, 0.2);
+    }
+
+    .panel::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .panel::-webkit-scrollbar-track {
+      background: rgba(13, 17, 23, 0.5);
+      border-radius: var(--radius-md);
+    }
+
+    .panel::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(88, 166, 255, 0.7), rgba(130, 219, 255, 0.4));
+      border-radius: var(--radius-md);
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      margin: 0 0 6px;
+      letter-spacing: 0.01em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .preset-grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .preset-card {
+      position: relative;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      background: var(--panel-alt);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border var(--transition), background var(--transition), transform var(--transition);
+    }
+
+    .preset-card:hover {
+      border-color: rgba(88, 166, 255, 0.35);
+      background: rgba(24, 32, 44, 0.95);
+      transform: translateY(-2px);
+    }
+
+    .preset-card.active {
+      border-color: rgba(88, 166, 255, 0.75);
+      background: rgba(24, 32, 44, 1);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+    }
+
+    .preset-preview {
+      border-radius: 12px;
+      height: 78px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preset-preview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.25));
+      mix-blend-mode: overlay;
+    }
+
+    .preset-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preset-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .preset-tag {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(88, 166, 255, 0.12);
+      color: rgba(88, 166, 255, 0.9);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .section {
+      margin-top: 36px;
+    }
+
+    .section h2 {
+      margin: 0 0 16px;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(15, 20, 28, 0.65);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      border: 1px solid rgba(240, 246, 252, 0.06);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .control {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .control input[type="color"],
+    .control input[type="text"],
+    .control input[type="number"],
+    .control input[type="range"],
+    .control select {
+      background: var(--input-bg);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: background var(--transition), border var(--transition);
+    }
+
+    .control input[type="range"] {
+      padding: 0;
+      height: 32px;
+    }
+
+    .control input[type="text"]:focus,
+    .control input[type="number"]:focus,
+    .control select:focus {
+      outline: none;
+      border-color: rgba(88, 166, 255, 0.65);
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+
+    .inline-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .range-value {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(88, 166, 255, 0.14);
+      color: rgba(181, 208, 255, 0.85);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: transform var(--transition), background var(--transition);
+    }
+
+    .chip:hover {
+      transform: translateY(-1px);
+      background: rgba(88, 166, 255, 0.24);
+    }
+
+    .chip.active {
+      background: rgba(88, 166, 255, 0.35);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(56, 97, 162, 0.3);
+    }
+
+    .section-divider {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.2), transparent);
+      margin: 32px 0 24px;
+    }
+
+    .preview-area {
+      position: relative;
+      background: radial-gradient(circle at top, rgba(88, 166, 255, 0.1), transparent 60%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow: hidden;
+    }
+
+    .preview-canvas {
+      position: relative;
+      width: min(900px, 80vw);
+      height: min(560px, 65vh);
+      border-radius: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(22, 27, 34, 0.4), rgba(22, 27, 34, 0.2));
+      box-shadow: var(--shadow-strong);
+      transition: box-shadow var(--transition), border var(--transition), transform var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .preview-canvas::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      pointer-events: none;
+    }
+
+    .preview-grid {
+      position: absolute;
+      inset: 0;
+      border-radius: 34px;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mix-blend-mode: screen;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .preview-layer {
+      position: absolute;
+      inset: 36px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .preview-image-wrapper {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(13, 17, 23, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 24px 60px rgba(13, 17, 23, 0.45);
+    }
+
+    .preview-image-wrapper img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: transform 200ms ease, filter 160ms ease;
+      border-radius: inherit;
+    }
+
+    .placeholder {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .placeholder svg {
+      width: 68px;
+      height: 68px;
+      fill: rgba(88, 166, 255, 0.6);
+      filter: drop-shadow(0 10px 24px rgba(88, 166, 255, 0.35));
+    }
+
+    .placeholder p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .upload-control {
+      border: 1px dashed rgba(88, 166, 255, 0.4);
+      border-radius: var(--radius-lg);
+      background: rgba(10, 15, 22, 0.6);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border var(--transition), background var(--transition);
+    }
+
+    .upload-control:hover {
+      border-color: rgba(88, 166, 255, 0.65);
+      background: rgba(18, 24, 32, 0.8);
+    }
+
+    .upload-control input {
+      display: none;
+    }
+
+    .upload-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .toolbar {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      gap: 12px;
+      z-index: 8;
+    }
+
+    .button {
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(12, 18, 28, 0.6);
+      color: var(--text-primary);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform var(--transition), background var(--transition), border var(--transition);
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      background: rgba(24, 32, 46, 0.85);
+      border-color: rgba(88, 166, 255, 0.5);
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, rgba(88, 166, 255, 0.85), rgba(130, 219, 255, 0.7));
+      border: none;
+      color: #0b1220;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+      box-shadow: 0 18px 40px rgba(65, 125, 210, 0.4);
+    }
+
+    .button.primary:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 24px 60px rgba(65, 125, 210, 0.48);
+    }
+
+    .layers-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .layer-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      padding: 14px 16px;
+      background: rgba(17, 23, 31, 0.85);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 12px;
+      transition: border var(--transition), background var(--transition), transform var(--transition);
+    }
+
+    .layer-item:hover {
+      border-color: rgba(88, 166, 255, 0.4);
+      background: rgba(26, 33, 45, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .layer-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(88, 166, 255, 0.8);
+      box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.2);
+    }
+
+    .layer-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .layer-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .layer-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .layer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .layer-actions button {
+      background: rgba(13, 17, 23, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .layer-actions button:hover {
+      color: var(--text-primary);
+      border-color: rgba(88, 166, 255, 0.45);
+      background: rgba(24, 32, 46, 0.85);
+    }
+
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 24px;
+    }
+
+    .switch input {
+      display: none;
+    }
+
+    .switch span {
+      position: absolute;
+      inset: 0;
+      background: rgba(13, 17, 23, 0.6);
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background var(--transition), border var(--transition);
+    }
+
+    .switch span::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(108, 158, 220, 0.8);
+      transition: transform var(--transition), background var(--transition);
+      box-shadow: 0 4px 10px rgba(88, 166, 255, 0.32);
+    }
+
+    .switch input:checked + span {
+      background: rgba(88, 166, 255, 0.18);
+      border-color: rgba(88, 166, 255, 0.45);
+    }
+
+    .switch input:checked + span::after {
+      transform: translateX(20px);
+      background: linear-gradient(135deg, rgba(88, 166, 255, 0.9), rgba(130, 219, 255, 0.85));
+      box-shadow: 0 6px 14px rgba(65, 125, 210, 0.45);
+    }
+
+    .stop-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .stop-item {
+      display: grid;
+      grid-template-columns: 90px 1fr 60px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .stop-item button {
+      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      height: 36px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .stop-item button:hover {
+      color: var(--text-primary);
+      background: rgba(88, 166, 255, 0.22);
+    }
+
+    .add-stop-button {
+      align-self: flex-start;
+      margin-top: 4px;
+      padding: 10px 14px;
+      background: rgba(88, 166, 255, 0.18);
+      border-radius: 10px;
+      border: 1px dashed rgba(88, 166, 255, 0.35);
+      color: rgba(181, 208, 255, 0.9);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .add-stop-button:hover {
+      background: rgba(88, 166, 255, 0.28);
+      border-style: solid;
+      color: #fff;
+    }
+
+    .palette-list {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .palette-swatch {
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: transform var(--transition), border var(--transition);
+    }
+
+    .palette-swatch:hover {
+      transform: translateY(-2px);
+      border-color: rgba(88, 166, 255, 0.6);
+    }
+
+    .palette-swatch.active {
+      border-width: 2px;
+      border-color: rgba(88, 166, 255, 0.9);
+      box-shadow: 0 12px 30px rgba(65, 125, 210, 0.35);
+    }
+
+    .texture-preview {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .texture-card {
+      height: 58px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .texture-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.2));
+      mix-blend-mode: overlay;
+    }
+
+    .texture-card.active {
+      border-color: rgba(88, 166, 255, 0.5);
+      box-shadow: 0 12px 32px rgba(88, 166, 255, 0.28);
+    }
+
+    .texture-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .histogram {
+      width: 100%;
+      height: 80px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(88, 166, 255, 0.22), rgba(88, 166, 255, 0));
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .histogram canvas {
+      position: absolute;
+      inset: 0;
+    }
+
+    .token {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(13, 17, 23, 0.6);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+    }
+
+    .token i {
+      font-style: normal;
+      color: rgba(181, 208, 255, 0.85);
+      font-weight: 600;
+    }
+
+    .save-strip {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .save-strip button {
+      flex: 1;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .tooltip span {
+      visibility: hidden;
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 17, 23, 0.85);
+      color: var(--text-primary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity var(--transition), transform var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .tooltip:hover span {
+      visibility: visible;
+      opacity: 1;
+      transform: translate(-50%, -4px);
+    }
+
+    .slider {
+      position: relative;
+    }
+
+    .slider input[type="range"] {
+      width: 100%;
+      background: transparent;
+      -webkit-appearance: none;
+    }
+
+    .slider input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: linear-gradient(90deg, rgba(88, 166, 255, 0.6), rgba(130, 219, 255, 0.5));
+      border-radius: 999px;
+    }
+
+    .slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid rgba(88, 166, 255, 0.65);
+      box-shadow: 0 2px 8px rgba(88, 166, 255, 0.45);
+      margin-top: -5px;
+    }
+
+    .slider input[type="range"]::-moz-range-track {
+      height: 6px;
+      background: linear-gradient(90deg, rgba(88, 166, 255, 0.6), rgba(130, 219, 255, 0.5));
+      border-radius: 999px;
+    }
+
+    .slider input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid rgba(88, 166, 255, 0.65);
+      box-shadow: 0 2px 8px rgba(88, 166, 255, 0.45);
+    }
+
+    .slider-value {
+      position: absolute;
+      top: -26px;
+      right: 0;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .details {
+      background: rgba(12, 18, 28, 0.6);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .details span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .details strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+    }
+
+    .credits {
+      margin-top: auto;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 24px;
+    }
+
+    .credits a {
+      color: rgba(130, 219, 255, 0.85);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .color-preview {
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+
+    .input-with-preview {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(13, 17, 23, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: rgba(181, 208, 255, 0.8);
+    }
+
+    .tabs {
+      display: flex;
+      background: rgba(12, 18, 28, 0.7);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+    }
+
+    .tabs button {
+      flex: 1;
+      padding: 12px 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .tabs button.active {
+      background: rgba(88, 166, 255, 0.2);
+      color: var(--text-primary);
+      box-shadow: inset 0 0 0 1px rgba(88, 166, 255, 0.4);
+    }
+
+    .tab-content {
+      margin-top: 16px;
+    }
+
+    .accordion {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .accordion-item + .accordion-item {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .accordion-header {
+      background: rgba(12, 18, 28, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .accordion-header:hover {
+      background: rgba(18, 26, 36, 0.85);
+    }
+
+    .accordion-header h3 {
+      margin: 0;
+      font-size: 0.92rem;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+    }
+
+    .accordion-content {
+      background: rgba(17, 24, 32, 0.8);
+      padding: 16px 18px;
+      display: none;
+    }
+
+    .accordion-item.open .accordion-content {
+      display: block;
+    }
+
+    .icon-button {
+      background: rgba(13, 17, 23, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .icon-button:hover {
+      color: var(--text-primary);
+      border-color: rgba(88, 166, 255, 0.45);
+      background: rgba(24, 32, 46, 0.85);
+    }
+
+    .preview-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .glow {
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(88, 166, 255, 0.45), rgba(88, 166, 255, 0));
+      filter: blur(40px);
+      opacity: 0.3;
+    }
+
+    .glow.one {
+      top: -40px;
+      left: -50px;
+    }
+
+    .glow.two {
+      bottom: -60px;
+      right: -80px;
+      background: radial-gradient(circle, rgba(130, 219, 255, 0.45), rgba(130, 219, 255, 0));
+    }
+
+    @media (max-width: 1180px) {
+      body {
+        grid-template-columns: minmax(320px, 420px) 1fr;
+      }
+
+      .preview-canvas {
+        width: min(720px, 80vw);
+        height: min(520px, 60vh);
+      }
+    }
+
+    @media (max-width: 960px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: 520px minmax(420px, auto);
+        overflow: auto;
+      }
+
+      .panel {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        flex-direction: row;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .panel::-webkit-scrollbar {
+        display: none;
+      }
+
+      .panel-content {
+        min-width: 520px;
+        padding-right: 30px;
+      }
+
+      .preview-area {
+        order: -1;
+      }
+
+      .preview-canvas {
+        width: min(640px, 90vw);
+        height: min(520px, 70vh);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        padding: 18px;
+      }
+
+      .panel-content {
+        min-width: 460px;
+      }
+
+      .control-group {
+        padding: 16px;
+      }
+
+      .control-row {
+        grid-template-columns: 1fr;
+      }
+
+      .stop-item {
+        grid-template-columns: 70px 1fr 42px;
+      }
+
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="panel">
+    <div class="panel-content">
+      <header>
+        <h1>SnapshotPro Studio</h1>
+        <p>Craft elegant gradients, dynamic shadows, and polished frames for your screenshots. Paste, drop, or upload
+          images and tune the stage in real-time with professional presets.</p>
+      </header>
+
+      <div class="section" id="presetSection">
+        <h2>Signature Presets</h2>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+
+      <div class="section">
+        <h2>Canvas Settings</h2>
+        <div class="control-group" id="canvasControls">
+          <div class="control">
+            <label for="canvasWidth">Canvas Width (px)</label>
+            <div class="slider">
+              <input type="range" id="canvasWidth" min="640" max="1600" value="1080" />
+              <span class="slider-value" id="canvasWidthValue">1080px</span>
+            </div>
+          </div>
+          <div class="control">
+            <label for="canvasHeight">Canvas Height (px)</label>
+            <div class="slider">
+              <input type="range" id="canvasHeight" min="400" max="1200" value="640" />
+              <span class="slider-value" id="canvasHeightValue">640px</span>
+            </div>
+          </div>
+          <div class="control">
+            <label for="canvasRadius">Canvas Radius</label>
+            <div class="slider">
+              <input type="range" id="canvasRadius" min="0" max="80" value="34" />
+              <span class="slider-value" id="canvasRadiusValue">34px</span>
+            </div>
+          </div>
+          <div class="control">
+            <label for="gridOpacity">Ambient Grid</label>
+            <div class="slider">
+              <input type="range" id="gridOpacity" min="0" max="1" step="0.05" value="0.35" />
+              <span class="slider-value" id="gridOpacityValue">35%</span>
+            </div>
+          </div>
+          <div class="control-row">
+            <div class="control">
+              <label>Grid Size</label>
+              <input type="number" id="gridSize" min="16" max="120" value="40" />
+            </div>
+            <div class="control">
+              <label for="textureIntensity">Texture Intensity</label>
+              <div class="slider">
+                <input type="range" id="textureIntensity" min="0" max="1" step="0.05" value="0.18" />
+                <span class="slider-value" id="textureIntensityValue">18%</span>
+              </div>
+            </div>
+          </div>
+          <div class="control">
+            <label for="backgroundBlur">Backdrop Blur</label>
+            <div class="slider">
+              <input type="range" id="backgroundBlur" min="0" max="40" value="16" />
+              <span class="slider-value" id="backgroundBlurValue">16px</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="gradientSection">
+        <h2>Gradient Designer</h2>
+        <div class="control-group">
+          <div class="control-row">
+            <div class="control">
+              <label for="gradientType">Type</label>
+              <select id="gradientType">
+                <option value="linear">Linear</option>
+                <option value="radial">Radial</option>
+                <option value="conic">Conic</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="gradientAngle">Angle</label>
+              <div class="slider">
+                <input type="range" id="gradientAngle" min="0" max="360" value="135" />
+                <span class="slider-value" id="gradientAngleValue">135°</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control">
+            <label>Gradient Stops</label>
+            <div class="stop-list" id="gradientStops"></div>
+            <button class="add-stop-button" id="addStop">+ Add Stop</button>
+          </div>
+
+          <div class="control">
+            <label>Palette Suggestions</label>
+            <div class="palette-list" id="paletteList"></div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <h2>Shadow & Framing</h2>
+        <div class="control-group">
+          <div class="control-row">
+            <div class="control">
+              <label for="shadowBlur">Shadow Blur</label>
+              <div class="slider">
+                <input type="range" id="shadowBlur" min="0" max="80" value="42" />
+                <span class="slider-value" id="shadowBlurValue">42px</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="shadowSpread">Shadow Spread</label>
+              <div class="slider">
+                <input type="range" id="shadowSpread" min="-40" max="60" value="12" />
+                <span class="slider-value" id="shadowSpreadValue">12px</span>
+              </div>
+            </div>
+          </div>
+          <div class="control-row">
+            <div class="control">
+              <label for="shadowOffsetX">Offset X</label>
+              <div class="slider">
+                <input type="range" id="shadowOffsetX" min="-120" max="120" value="0" />
+                <span class="slider-value" id="shadowOffsetXValue">0px</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="shadowOffsetY">Offset Y</label>
+              <div class="slider">
+                <input type="range" id="shadowOffsetY" min="-120" max="120" value="48" />
+                <span class="slider-value" id="shadowOffsetYValue">48px</span>
+              </div>
+            </div>
+          </div>
+          <div class="control">
+            <label for="shadowColor">Shadow Color</label>
+            <div class="input-with-preview">
+              <div class="color-preview" id="shadowColorPreview">rgba</div>
+              <input type="text" id="shadowColor" value="rgba(10, 12, 23, 0.7)" />
+            </div>
+          </div>
+          <div class="control-row">
+            <div class="control">
+              <label>Shadow Presets</label>
+              <div class="chip-list" id="shadowPresets"></div>
+            </div>
+            <div class="control">
+              <label>Inner Stroke</label>
+              <div class="chip-list" id="strokeOptions"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Image Enhancements</h2>
+        <div class="control-group">
+          <div class="tabs" id="imageTabs">
+            <button data-tab="adjust" class="active">Adjustments</button>
+            <button data-tab="filters">Filters</button>
+            <button data-tab="effects">Effects</button>
+          </div>
+          <div class="tab-content" id="tabAdjust">
+            <div class="control">
+              <label for="imageScale">Scale</label>
+              <div class="slider">
+                <input type="range" id="imageScale" min="0.4" max="1.6" step="0.01" value="1" />
+                <span class="slider-value" id="imageScaleValue">100%</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageRotation">Rotation</label>
+              <div class="slider">
+                <input type="range" id="imageRotation" min="-20" max="20" value="0" />
+                <span class="slider-value" id="imageRotationValue">0°</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageBorderRadius">Border Radius</label>
+              <div class="slider">
+                <input type="range" id="imageBorderRadius" min="0" max="60" value="16" />
+                <span class="slider-value" id="imageBorderRadiusValue">16px</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" id="tabFilters" style="display:none;">
+            <div class="control">
+              <label for="imageBrightness">Brightness</label>
+              <div class="slider">
+                <input type="range" id="imageBrightness" min="0.2" max="2" step="0.05" value="1" />
+                <span class="slider-value" id="imageBrightnessValue">1.00</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageContrast">Contrast</label>
+              <div class="slider">
+                <input type="range" id="imageContrast" min="0.2" max="2" step="0.05" value="1" />
+                <span class="slider-value" id="imageContrastValue">1.00</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageSaturation">Saturation</label>
+              <div class="slider">
+                <input type="range" id="imageSaturation" min="0" max="2" step="0.05" value="1" />
+                <span class="slider-value" id="imageSaturationValue">1.00</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageTemperature">Temperature</label>
+              <div class="slider">
+                <input type="range" id="imageTemperature" min="-100" max="100" value="0" />
+                <span class="slider-value" id="imageTemperatureValue">0</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageVignette">Vignette</label>
+              <div class="slider">
+                <input type="range" id="imageVignette" min="0" max="1" step="0.05" value="0" />
+                <span class="slider-value" id="imageVignetteValue">0%</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" id="tabEffects" style="display:none;">
+            <div class="control-row">
+              <div class="control">
+                <label>Reflection</label>
+                <div class="switch">
+                  <input type="checkbox" id="imageReflection" />
+                  <span></span>
+                </div>
+              </div>
+              <div class="control">
+                <label>Drop Shadow</label>
+                <div class="switch">
+                  <input type="checkbox" id="imageShadowToggle" checked />
+                  <span></span>
+                </div>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageShadowBlur">Image Shadow Blur</label>
+              <div class="slider">
+                <input type="range" id="imageShadowBlur" min="0" max="40" value="18" />
+                <span class="slider-value" id="imageShadowBlurValue">18px</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageShadowSpread">Image Shadow Spread</label>
+              <div class="slider">
+                <input type="range" id="imageShadowSpread" min="-20" max="30" value="4" />
+                <span class="slider-value" id="imageShadowSpreadValue">4px</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageShadowOpacity">Image Shadow Opacity</label>
+              <div class="slider">
+                <input type="range" id="imageShadowOpacity" min="0" max="1" step="0.05" value="0.4" />
+                <span class="slider-value" id="imageShadowOpacityValue">40%</span>
+              </div>
+            </div>
+            <div class="control">
+              <label for="imageShadowColor">Image Shadow Color</label>
+              <div class="input-with-preview">
+                <div class="color-preview" id="imageShadowColorPreview">rgba</div>
+                <input type="text" id="imageShadowColor" value="rgba(8, 10, 24, 0.5)" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Export</h2>
+        <div class="control-group">
+          <div class="control-row">
+            <div class="control">
+              <label for="exportFormat">Format</label>
+              <select id="exportFormat">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="webp">WEBP</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="exportScale">Scale</label>
+              <select id="exportScale">
+                <option value="1">1x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+              </select>
+            </div>
+          </div>
+          <div class="details">
+            <div>
+              <span>Estimated Resolution</span>
+              <strong id="exportResolution">1080 × 640</strong>
+            </div>
+            <div>
+              <span>Background</span>
+              <strong id="exportGradientLabel">Linear 135°</strong>
+            </div>
+          </div>
+          <div class="save-strip">
+            <button class="button" id="copySettings">Copy Settings</button>
+            <button class="button primary" id="downloadImage">Download</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="credits">
+        <span>SnapshotPro Studio · Crafted for effortless sharing</span>
+        <a href="https://twitter.com/" target="_blank">Share love on Twitter</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="preview-area" id="dropZone">
+    <div class="preview-canvas" id="previewCanvas">
+      <div class="preview-grid" id="previewGrid"></div>
+      <div class="preview-layer" id="previewLayer">
+        <div class="preview-image-wrapper" id="imageWrapper">
+          <div class="placeholder" id="imagePlaceholder">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z" />
+            </svg>
+            <p>Drop, paste, or upload an image to begin. SnapshotPro automatically adapts lighting, gradients, and shadows
+              to your content.</p>
+            <label class="upload-control" for="imageInput">
+              <strong>Upload Image</strong>
+              <div class="upload-hint">PNG, JPG, GIF, SVG, WebP · Paste with ⌘/Ctrl + V</div>
+            </label>
+            <input type="file" id="imageInput" accept="image/*" />
+          </div>
+        </div>
+      </div>
+      <div class="preview-overlay">
+        <div class="glow one" id="glowOne"></div>
+        <div class="glow two" id="glowTwo"></div>
+      </div>
+      <div class="toolbar">
+        <button class="button" id="resetSettings">Reset</button>
+        <button class="button" id="toggleGuides">Guides</button>
+      </div>
+    </div>
+  </main>
+
+  <template id="stopTemplate">
+    <div class="stop-item">
+      <input type="color" class="stop-color" />
+      <div class="slider">
+        <input type="range" class="stop-position" min="0" max="100" />
+        <span class="slider-value stop-value">0%</span>
+      </div>
+      <button class="remove-stop">✕</button>
+    </div>
+  </template>
+
+  <script>
+    const $ = (selector, scope = document) => scope.querySelector(selector);
+    const $$ = (selector, scope = document) => Array.from(scope.querySelectorAll(selector));
+
+    const state = {
+      canvas: {
+        width: 1080,
+        height: 640,
+        radius: 34,
+        gridOpacity: 0.35,
+        gridSize: 40,
+        textureIntensity: 0.18,
+        backgroundBlur: 16,
+      },
+      gradient: {
+        type: "linear",
+        angle: 135,
+        stops: [
+          { color: "#0b1f3a", position: 0 },
+          { color: "#104c88", position: 42 },
+          { color: "#5ac8fa", position: 100 },
+        ],
+      },
+      shadow: {
+        blur: 42,
+        spread: 12,
+        offsetX: 0,
+        offsetY: 48,
+        color: "rgba(10, 12, 23, 0.7)",
+        stroke: {
+          size: 1,
+          opacity: 0.22,
+        },
+      },
+      image: {
+        scale: 1,
+        rotation: 0,
+        borderRadius: 16,
+        brightness: 1,
+        contrast: 1,
+        saturation: 1,
+        temperature: 0,
+        vignette: 0,
+        shadowEnabled: true,
+        reflection: false,
+        shadowBlur: 18,
+        shadowSpread: 4,
+        shadowOpacity: 0.4,
+        shadowColor: "rgba(8, 10, 24, 0.5)",
+      },
+      export: {
+        format: "png",
+        scale: 1,
+      },
+      textures: {
+        type: "none",
+      },
+    };
+
+    const presets = [
+      {
+        id: "deep-horizon",
+        name: "Deep Horizon",
+        tag: "Oceanic",
+        gradient: {
+          type: "linear",
+          angle: 130,
+          stops: [
+            { color: "#0c0f2a", position: 0 },
+            { color: "#182d69", position: 35 },
+            { color: "#4f7fd7", position: 70 },
+            { color: "#8fd4ff", position: 100 },
+          ],
+        },
+        shadow: {
+          blur: 54,
+          spread: 18,
+          offsetX: 0,
+          offsetY: 58,
+          color: "rgba(8, 12, 28, 0.75)",
+        },
+        canvas: {
+          gridOpacity: 0.28,
+          gridSize: 42,
+          textureIntensity: 0.16,
+          backgroundBlur: 20,
+        },
+      },
+      {
+        id: "neon-rush",
+        name: "Neon Rush",
+        tag: "Vibrant",
+        gradient: {
+          type: "radial",
+          angle: 160,
+          stops: [
+            { color: "#0c0414", position: 0 },
+            { color: "#360a6d", position: 45 },
+            { color: "#ff4ecd", position: 78 },
+            { color: "#ffda82", position: 100 },
+          ],
+        },
+        shadow: {
+          blur: 48,
+          spread: 20,
+          offsetX: 12,
+          offsetY: 52,
+          color: "rgba(14, 6, 34, 0.7)",
+        },
+        canvas: {
+          gridOpacity: 0.22,
+          gridSize: 36,
+          textureIntensity: 0.24,
+          backgroundBlur: 12,
+        },
+      },
+      {
+        id: "mono-chrome",
+        name: "Mono Chrome",
+        tag: "Minimal",
+        gradient: {
+          type: "linear",
+          angle: 112,
+          stops: [
+            { color: "#0d1117", position: 0 },
+            { color: "#202833", position: 52 },
+            { color: "#3a4756", position: 100 },
+          ],
+        },
+        shadow: {
+          blur: 38,
+          spread: 10,
+          offsetX: -8,
+          offsetY: 42,
+          color: "rgba(0, 0, 0, 0.68)",
+        },
+        canvas: {
+          gridOpacity: 0.18,
+          gridSize: 44,
+          textureIntensity: 0.12,
+          backgroundBlur: 18,
+        },
+      },
+      {
+        id: "aurora",
+        name: "Aurora",
+        tag: "Pastel",
+        gradient: {
+          type: "conic",
+          angle: 270,
+          stops: [
+            { color: "#082d48", position: 0 },
+            { color: "#1b6c68", position: 25 },
+            { color: "#62d4a5", position: 55 },
+            { color: "#f7f6c5", position: 80 },
+            { color: "#f4a5d4", position: 100 },
+          ],
+        },
+        shadow: {
+          blur: 60,
+          spread: 22,
+          offsetX: -6,
+          offsetY: 52,
+          color: "rgba(6, 20, 24, 0.65)",
+        },
+        canvas: {
+          gridOpacity: 0.3,
+          gridSize: 46,
+          textureIntensity: 0.2,
+          backgroundBlur: 24,
+        },
+      },
+      {
+        id: "dawn-glow",
+        name: "Dawn Glow",
+        tag: "Warm",
+        gradient: {
+          type: "radial",
+          angle: 210,
+          stops: [
+            { color: "#1b0c21", position: 0 },
+            { color: "#4c1734", position: 44 },
+            { color: "#d36f4f", position: 72 },
+            { color: "#ffd29d", position: 100 },
+          ],
+        },
+        shadow: {
+          blur: 52,
+          spread: 18,
+          offsetX: 10,
+          offsetY: 50,
+          color: "rgba(38, 15, 20, 0.7)",
+        },
+        canvas: {
+          gridOpacity: 0.26,
+          gridSize: 34,
+          textureIntensity: 0.22,
+          backgroundBlur: 18,
+        },
+      },
+      {
+        id: "silk-noir",
+        name: "Silk Noir",
+        tag: "Editorial",
+        gradient: {
+          type: "linear",
+          angle: 150,
+          stops: [
+            { color: "#0f0f12", position: 0 },
+            { color: "#1a1e26", position: 48 },
+            { color: "#2b3340", position: 100 },
+          ],
+        },
+        shadow: {
+          blur: 42,
+          spread: 16,
+          offsetX: 0,
+          offsetY: 46,
+          color: "rgba(8, 10, 18, 0.78)",
+        },
+        canvas: {
+          gridOpacity: 0.18,
+          gridSize: 60,
+          textureIntensity: 0.15,
+          backgroundBlur: 18,
+        },
+      },
+    ];
+
+    const palettes = [
+      ["#0b1f3a", "#104c88", "#5ac8fa"],
+      ["#231a6b", "#9834f5", "#ff8cf2"],
+      ["#14293d", "#2f6a5d", "#95f0d6"],
+      ["#2c1a13", "#b64b32", "#ffd08e"],
+      ["#0e111a", "#282c34", "#9098a9"],
+      ["#1f0f37", "#50186d", "#ffd2f5"],
+      ["#07121f", "#1c3a73", "#5f9df7"],
+      ["#071018", "#064663", "#4ea5d9"],
+      ["#251c1c", "#5c2b2b", "#f2a154"],
+      ["#111b1f", "#244f55", "#7bc6cc"],
+      ["#170f1e", "#44276a", "#9f7aea"],
+      ["#1c1f2b", "#313b4f", "#8a9ab5"],
+      ["#04121c", "#16324f", "#3d8bfd"],
+      ["#080d15", "#1b2838", "#4b97ff"],
+      ["#0a101e", "#2b3d55", "#7a95c5"],
+      ["#0a131c", "#1f2a44", "#516aa6"],
+      ["#0d141f", "#27324a", "#5c6f93"],
+      ["#0c1219", "#1c2333", "#495470"],
+      ["#0b141b", "#1a2331", "#334059"],
+      ["#0b121a", "#182230", "#2a384d"],
+      ["#050b13", "#101828", "#1d2a40"],
+      ["#120f1c", "#2c2349", "#473d7b"],
+      ["#140f18", "#2f1b3e", "#562963"],
+      ["#160f16", "#351a2f", "#5b2745"],
+      ["#1b0f0f", "#421919", "#6a2424"],
+      ["#1b120f", "#442819", "#6c3c23"],
+      ["#1b160f", "#44361a", "#6c5323"],
+      ["#0f1b16", "#1a4436", "#236c53"],
+      ["#0f1b1a", "#1a443f", "#236c60"],
+      ["#0f1a1b", "#1a3f44", "#23606c"],
+    ];
+
+    const shadowPresets = [
+      {
+        name: "Cinematic",
+        blur: 56,
+        spread: 18,
+        offsetX: 6,
+        offsetY: 64,
+        color: "rgba(8, 12, 28, 0.78)",
+      },
+      {
+        name: "Ambient",
+        blur: 42,
+        spread: 12,
+        offsetX: -4,
+        offsetY: 52,
+        color: "rgba(7, 10, 24, 0.68)",
+      },
+      {
+        name: "Floating",
+        blur: 36,
+        spread: 8,
+        offsetX: 0,
+        offsetY: 40,
+        color: "rgba(8, 12, 26, 0.58)",
+      },
+      {
+        name: "Halo",
+        blur: 70,
+        spread: 26,
+        offsetX: 0,
+        offsetY: 70,
+        color: "rgba(16, 22, 42, 0.72)",
+      },
+      {
+        name: "Studio",
+        blur: 46,
+        spread: 10,
+        offsetX: 18,
+        offsetY: 60,
+        color: "rgba(20, 18, 34, 0.6)",
+      },
+      {
+        name: "Velvet",
+        blur: 58,
+        spread: 24,
+        offsetX: -12,
+        offsetY: 68,
+        color: "rgba(12, 18, 34, 0.74)",
+      },
+    ];
+
+    const strokeOptions = [
+      { name: "None", size: 0, opacity: 0 },
+      { name: "Gloss", size: 1, opacity: 0.18 },
+      { name: "Luxe", size: 2, opacity: 0.24 },
+      { name: "Focus", size: 3, opacity: 0.32 },
+      { name: "Aura", size: 4, opacity: 0.38 },
+      { name: "Glow", size: 6, opacity: 0.44 },
+    ];
+
+    const textureDefinitions = {
+      none: "",
+      grain: `radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08), transparent 50%),
+        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.06), transparent 55%),
+        radial-gradient(circle at 40% 70%, rgba(255, 255, 255, 0.05), transparent 60%)`,
+      aurora: `radial-gradient(circle at 20% 30%, rgba(120, 217, 255, 0.18), transparent 60%),
+        radial-gradient(circle at 70% 40%, rgba(144, 122, 255, 0.14), transparent 60%),
+        radial-gradient(circle at 40% 75%, rgba(255, 135, 223, 0.18), transparent 65%)`,
+      mesh: `radial-gradient(80% 120% at 20% 40%, rgba(255, 200, 132, 0.18), transparent 70%),
+        radial-gradient(80% 120% at 80% 30%, rgba(127, 162, 255, 0.14), transparent 70%),
+        radial-gradient(80% 120% at 50% 80%, rgba(123, 255, 214, 0.18), transparent 70%)`,
+      dusk: `radial-gradient(circle at 16% 24%, rgba(255, 124, 164, 0.18), transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 191, 120, 0.18), transparent 55%),
+        radial-gradient(circle at 50% 80%, rgba(88, 166, 255, 0.18), transparent 60%)`,
+    };
+
+    const textureCards = [
+      { id: "none", name: "Clean" },
+      { id: "grain", name: "Grain" },
+      { id: "aurora", name: "Aurora" },
+      { id: "mesh", name: "Mesh" },
+      { id: "dusk", name: "Dusk" },
+    ];
+
+    const imageFilters = [
+      {
+        id: "calm-blue",
+        name: "Calm Blue",
+        settings: {
+          brightness: 1.05,
+          contrast: 1.08,
+          saturation: 1.1,
+          temperature: -12,
+          vignette: 0.08,
+        },
+      },
+      {
+        id: "retro-warm",
+        name: "Retro Warm",
+        settings: {
+          brightness: 1.12,
+          contrast: 1.05,
+          saturation: 1.18,
+          temperature: 24,
+          vignette: 0.12,
+        },
+      },
+      {
+        id: "noir-soft",
+        name: "Noir Soft",
+        settings: {
+          brightness: 1,
+          contrast: 1.18,
+          saturation: 0,
+          temperature: -6,
+          vignette: 0.18,
+        },
+      },
+      {
+        id: "future-glow",
+        name: "Future Glow",
+        settings: {
+          brightness: 1.15,
+          contrast: 1.1,
+          saturation: 1.25,
+          temperature: 14,
+          vignette: 0.1,
+        },
+      },
+    ];
+
+    const imageEffectPresets = [
+      {
+        id: "clean",
+        name: "Clean",
+        shadowBlur: 18,
+        shadowSpread: 4,
+        shadowOpacity: 0.4,
+        shadowColor: "rgba(8, 10, 24, 0.5)",
+        reflection: false,
+      },
+      {
+        id: "glow",
+        name: "Glow",
+        shadowBlur: 28,
+        shadowSpread: 12,
+        shadowOpacity: 0.45,
+        shadowColor: "rgba(72, 120, 255, 0.32)",
+        reflection: true,
+      },
+      {
+        id: "depth",
+        name: "Depth",
+        shadowBlur: 36,
+        shadowSpread: 10,
+        shadowOpacity: 0.55,
+        shadowColor: "rgba(18, 24, 44, 0.7)",
+        reflection: false,
+      },
+      {
+        id: "aerial",
+        name: "Aerial",
+        shadowBlur: 32,
+        shadowSpread: -4,
+        shadowOpacity: 0.35,
+        shadowColor: "rgba(4, 8, 20, 0.6)",
+        reflection: true,
+      },
+    ];
+
+    const gradientHistory = [];
+
+    const dom = {
+      presetGrid: $("#presetGrid"),
+      gradientStops: $("#gradientStops"),
+      paletteList: $("#paletteList"),
+      shadowPresets: $("#shadowPresets"),
+      strokeOptions: $("#strokeOptions"),
+      imageTabs: $("#imageTabs"),
+      previewCanvas: $("#previewCanvas"),
+      previewGrid: $("#previewGrid"),
+      previewLayer: $("#previewLayer"),
+      imageWrapper: $("#imageWrapper"),
+      imagePlaceholder: $("#imagePlaceholder"),
+      canvasWidth: $("#canvasWidth"),
+      canvasHeight: $("#canvasHeight"),
+      canvasRadius: $("#canvasRadius"),
+      gridOpacity: $("#gridOpacity"),
+      gridSize: $("#gridSize"),
+      textureIntensity: $("#textureIntensity"),
+      backgroundBlur: $("#backgroundBlur"),
+      gradientType: $("#gradientType"),
+      gradientAngle: $("#gradientAngle"),
+      shadowBlur: $("#shadowBlur"),
+      shadowSpread: $("#shadowSpread"),
+      shadowOffsetX: $("#shadowOffsetX"),
+      shadowOffsetY: $("#shadowOffsetY"),
+      shadowColor: $("#shadowColor"),
+      shadowColorPreview: $("#shadowColorPreview"),
+      imageScale: $("#imageScale"),
+      imageRotation: $("#imageRotation"),
+      imageBorderRadius: $("#imageBorderRadius"),
+      imageBrightness: $("#imageBrightness"),
+      imageContrast: $("#imageContrast"),
+      imageSaturation: $("#imageSaturation"),
+      imageTemperature: $("#imageTemperature"),
+      imageVignette: $("#imageVignette"),
+      imageReflection: $("#imageReflection"),
+      imageShadowToggle: $("#imageShadowToggle"),
+      imageShadowBlur: $("#imageShadowBlur"),
+      imageShadowSpread: $("#imageShadowSpread"),
+      imageShadowOpacity: $("#imageShadowOpacity"),
+      imageShadowColor: $("#imageShadowColor"),
+      imageShadowColorPreview: $("#imageShadowColorPreview"),
+      exportFormat: $("#exportFormat"),
+      exportScale: $("#exportScale"),
+      exportResolution: $("#exportResolution"),
+      exportGradientLabel: $("#exportGradientLabel"),
+      copySettings: $("#copySettings"),
+      downloadImage: $("#downloadImage"),
+      canvasWidthValue: $("#canvasWidthValue"),
+      canvasHeightValue: $("#canvasHeightValue"),
+      canvasRadiusValue: $("#canvasRadiusValue"),
+      gridOpacityValue: $("#gridOpacityValue"),
+      textureIntensityValue: $("#textureIntensityValue"),
+      backgroundBlurValue: $("#backgroundBlurValue"),
+      gradientAngleValue: $("#gradientAngleValue"),
+      shadowBlurValue: $("#shadowBlurValue"),
+      shadowSpreadValue: $("#shadowSpreadValue"),
+      shadowOffsetXValue: $("#shadowOffsetXValue"),
+      shadowOffsetYValue: $("#shadowOffsetYValue"),
+      imageScaleValue: $("#imageScaleValue"),
+      imageRotationValue: $("#imageRotationValue"),
+      imageBorderRadiusValue: $("#imageBorderRadiusValue"),
+      imageBrightnessValue: $("#imageBrightnessValue"),
+      imageContrastValue: $("#imageContrastValue"),
+      imageSaturationValue: $("#imageSaturationValue"),
+      imageTemperatureValue: $("#imageTemperatureValue"),
+      imageVignetteValue: $("#imageVignetteValue"),
+      imageShadowBlurValue: $("#imageShadowBlurValue"),
+      imageShadowSpreadValue: $("#imageShadowSpreadValue"),
+      imageShadowOpacityValue: $("#imageShadowOpacityValue"),
+      dropZone: $("#dropZone"),
+      imageInput: $("#imageInput"),
+      resetSettings: $("#resetSettings"),
+      toggleGuides: $("#toggleGuides"),
+      glowOne: $("#glowOne"),
+      glowTwo: $("#glowTwo"),
+    };
+
+    const gradientToCss = (gradient) => {
+      const stops = gradient.stops
+        .map((stop) => `${stop.color} ${stop.position}%`)
+        .join(", ");
+      switch (gradient.type) {
+        case "radial":
+          return `radial-gradient(circle at 50% 50%, ${stops})`;
+        case "conic":
+          return `conic-gradient(from ${gradient.angle}deg at 50% 50%, ${stops})`;
+        default:
+          return `linear-gradient(${gradient.angle}deg, ${stops})`;
+      }
+    };
+
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+    const updateSliderValue = (input, label, unit = "", transform = (v) => v) => {
+      const value = transform(parseFloat(input.value));
+      label.textContent = `${value}${unit}`;
+    };
+
+    const createElement = (tag, className, content) => {
+      const el = document.createElement(tag);
+      if (className) el.className = className;
+      if (content !== undefined) el.innerHTML = content;
+      return el;
+    };
+
+    const renderPresetCards = () => {
+      dom.presetGrid.innerHTML = "";
+      presets.forEach((preset) => {
+        const card = createElement("div", "preset-card");
+        card.dataset.presetId = preset.id;
+        if (state.gradient.type === preset.gradient.type &&
+          JSON.stringify(state.gradient.stops) === JSON.stringify(preset.gradient.stops)) {
+          card.classList.add("active");
+        }
+        const preview = createElement("div", "preset-preview");
+        preview.style.backgroundImage = gradientToCss(preset.gradient);
+        const meta = createElement("div", "preset-meta");
+        const title = createElement("span", "preset-title", preset.name);
+        const tag = createElement("span", "preset-tag", preset.tag);
+        meta.append(title, tag);
+        card.append(preview, meta);
+        card.addEventListener("click", () => applyPreset(preset));
+        dom.presetGrid.append(card);
+      });
+    };
+
+    const renderPaletteList = () => {
+      dom.paletteList.innerHTML = "";
+      palettes.forEach((palette) => {
+        const swatch = createElement("div", "palette-swatch");
+        swatch.style.background = `linear-gradient(135deg, ${palette.join(", ")})`;
+        swatch.title = palette.join(" • ");
+        swatch.addEventListener("click", () => {
+          state.gradient.stops = palette.map((color, index) => ({
+            color,
+            position: Math.round((index / (palette.length - 1)) * 100),
+          }));
+          gradientHistory.push(JSON.parse(JSON.stringify(state.gradient.stops)));
+          renderGradientStops();
+          updateGradient();
+        });
+        dom.paletteList.append(swatch);
+      });
+    };
+
+    const renderShadowPresets = () => {
+      dom.shadowPresets.innerHTML = "";
+      shadowPresets.forEach((preset) => {
+        const chip = createElement("div", "chip", preset.name);
+        if (
+          state.shadow.blur === preset.blur &&
+          state.shadow.spread === preset.spread &&
+          state.shadow.offsetX === preset.offsetX &&
+          state.shadow.offsetY === preset.offsetY
+        ) {
+          chip.classList.add("active");
+        }
+        chip.addEventListener("click", () => {
+          Object.assign(state.shadow, {
+            blur: preset.blur,
+            spread: preset.spread,
+            offsetX: preset.offsetX,
+            offsetY: preset.offsetY,
+            color: preset.color,
+          });
+          dom.shadowBlur.value = preset.blur;
+          dom.shadowSpread.value = preset.spread;
+          dom.shadowOffsetX.value = preset.offsetX;
+          dom.shadowOffsetY.value = preset.offsetY;
+          dom.shadowColor.value = preset.color;
+          updateAllSliderLabels();
+          renderShadowPresets();
+          updateShadow();
+        });
+        dom.shadowPresets.append(chip);
+      });
+    };
+
+    const renderStrokeOptions = () => {
+      dom.strokeOptions.innerHTML = "";
+      strokeOptions.forEach((option) => {
+        const chip = createElement("div", "chip", option.name);
+        if (state.shadow.stroke.size === option.size && state.shadow.stroke.opacity === option.opacity) {
+          chip.classList.add("active");
+        }
+        chip.addEventListener("click", () => {
+          state.shadow.stroke = { size: option.size, opacity: option.opacity };
+          renderStrokeOptions();
+          updateShadow();
+        });
+        dom.strokeOptions.append(chip);
+      });
+    };
+
+    const renderGradientStops = () => {
+      dom.gradientStops.innerHTML = "";
+      state.gradient.stops
+        .sort((a, b) => a.position - b.position)
+        .forEach((stop, index) => {
+          const template = $("#stopTemplate").content.cloneNode(true);
+          const stopElement = template.querySelector(".stop-item");
+          const colorInput = template.querySelector(".stop-color");
+          const positionInput = template.querySelector(".stop-position");
+          const valueLabel = template.querySelector(".stop-value");
+          const removeButton = template.querySelector(".remove-stop");
+          colorInput.value = stop.color;
+          positionInput.value = stop.position;
+          valueLabel.textContent = `${stop.position}%`;
+
+          colorInput.addEventListener("input", (event) => {
+            state.gradient.stops[index].color = event.target.value;
+            updateGradient();
+          });
+
+          positionInput.addEventListener("input", (event) => {
+            const value = clamp(parseInt(event.target.value, 10), 0, 100);
+            state.gradient.stops[index].position = value;
+            valueLabel.textContent = `${value}%`;
+            updateGradient();
+          });
+
+          removeButton.addEventListener("click", () => {
+            if (state.gradient.stops.length > 2) {
+              state.gradient.stops.splice(index, 1);
+              renderGradientStops();
+              updateGradient();
+            }
+          });
+
+          dom.gradientStops.append(stopElement);
+        });
+    };
+
+    const renderTextureOptions = () => {
+      const textureSection = createElement("div", "section");
+      const heading = createElement("h2", null, "Atmospheric Textures");
+      const group = createElement("div", "control-group");
+      const previewGrid = createElement("div", "texture-preview");
+
+      textureCards.forEach((texture) => {
+        const card = createElement("div", "texture-card");
+        card.dataset.texture = texture.id;
+        if (textureDefinitions[texture.id]) {
+          card.style.backgroundImage = textureDefinitions[texture.id];
+        } else {
+          card.style.background = "rgba(12, 18, 28, 0.9)";
+        }
+        if (state.textures.type === texture.id) {
+          card.classList.add("active");
+        }
+        card.title = texture.name;
+        card.addEventListener("click", () => {
+          state.textures.type = texture.id;
+          renderTextureOptions();
+          updateGradient();
+        });
+        previewGrid.append(card);
+      });
+
+      const info = createElement(
+        "p",
+        null,
+        "Blend ambient textures with your gradient to create cinematic depth. Each preset is tuned to complement the color palette without overwhelming your screenshot."
+      );
+      info.style.margin = "0";
+      info.style.color = "var(--text-muted)";
+      info.style.fontSize = "0.85rem";
+      info.style.lineHeight = "1.6";
+
+      group.append(previewGrid, info);
+      textureSection.append(heading, group);
+      $(".panel-content").insertBefore(textureSection, $("#gradientSection").nextSibling);
+    };
+
+    const renderImageFilterPresets = () => {
+      const section = createElement("div", "section");
+      const heading = createElement("h2", null, "Filter Presets");
+      const group = createElement("div", "control-group");
+      const chips = createElement("div", "chip-list");
+
+      imageFilters.forEach((filter) => {
+        const chip = createElement("div", "chip", filter.name);
+        const isActive =
+          state.image.brightness === filter.settings.brightness &&
+          state.image.contrast === filter.settings.contrast &&
+          state.image.saturation === filter.settings.saturation &&
+          state.image.temperature === filter.settings.temperature &&
+          state.image.vignette === filter.settings.vignette;
+        if (isActive) chip.classList.add("active");
+        chip.addEventListener("click", () => {
+          Object.assign(state.image, filter.settings);
+          dom.imageBrightness.value = filter.settings.brightness;
+          dom.imageContrast.value = filter.settings.contrast;
+          dom.imageSaturation.value = filter.settings.saturation;
+          dom.imageTemperature.value = filter.settings.temperature;
+          dom.imageVignette.value = filter.settings.vignette;
+          updateAllSliderLabels();
+          updateImageFilters();
+          renderImageFilterPresets();
+        });
+        chips.append(chip);
+      });
+
+      group.append(chips);
+      section.append(heading, group);
+      $(".panel-content").insertBefore(section, $("#gradientSection"));
+    };
+
+    const renderImageEffectPresets = () => {
+      const section = createElement("div", "section");
+      const heading = createElement("h2", null, "Image Effects");
+      const group = createElement("div", "control-group");
+      const chips = createElement("div", "chip-list");
+
+      imageEffectPresets.forEach((effect) => {
+        const chip = createElement("div", "chip", effect.name);
+        const isActive =
+          state.image.shadowBlur === effect.shadowBlur &&
+          state.image.shadowSpread === effect.shadowSpread &&
+          state.image.shadowOpacity === effect.shadowOpacity &&
+          state.image.shadowColor === effect.shadowColor &&
+          state.image.reflection === effect.reflection;
+        if (isActive) chip.classList.add("active");
+        chip.addEventListener("click", () => {
+          state.image.shadowBlur = effect.shadowBlur;
+          state.image.shadowSpread = effect.shadowSpread;
+          state.image.shadowOpacity = effect.shadowOpacity;
+          state.image.shadowColor = effect.shadowColor;
+          state.image.reflection = effect.reflection;
+          dom.imageShadowBlur.value = effect.shadowBlur;
+          dom.imageShadowSpread.value = effect.shadowSpread;
+          dom.imageShadowOpacity.value = effect.shadowOpacity;
+          dom.imageShadowColor.value = effect.shadowColor;
+          dom.imageReflection.checked = effect.reflection;
+          updateAllSliderLabels();
+          updateImageEffects();
+          renderImageEffectPresets();
+        });
+        chips.append(chip);
+      });
+
+      group.append(chips);
+      section.append(heading, group);
+      $(".panel-content").insertBefore(section, $("#gradientSection"));
+    };
+
+    const updateCanvasDimensions = () => {
+      const width = state.canvas.width;
+      const height = state.canvas.height;
+      dom.previewCanvas.style.width = `${width}px`;
+      dom.previewCanvas.style.height = `${height}px`;
+      dom.previewCanvas.style.borderRadius = `${state.canvas.radius}px`;
+      dom.previewCanvas.querySelector(".preview-layer").style.borderRadius = `${Math.max(state.canvas.radius - 10, 0)}px`;
+      dom.previewCanvas.querySelector(".preview-image-wrapper").style.borderRadius = `${Math.max(state.canvas.radius - 18, 0)}px`;
+      dom.previewGrid.style.opacity = state.canvas.gridOpacity;
+      dom.previewGrid.style.backgroundSize = `${state.canvas.gridSize}px ${state.canvas.gridSize}px`;
+      dom.previewCanvas.style.backdropFilter = `blur(${state.canvas.backgroundBlur}px)`;
+      dom.canvasWidthValue.textContent = `${width}px`;
+      dom.canvasHeightValue.textContent = `${height}px`;
+      dom.canvasRadiusValue.textContent = `${state.canvas.radius}px`;
+      dom.gridOpacityValue.textContent = `${Math.round(state.canvas.gridOpacity * 100)}%`;
+      dom.textureIntensityValue.textContent = `${Math.round(state.canvas.textureIntensity * 100)}%`;
+      dom.backgroundBlurValue.textContent = `${state.canvas.backgroundBlur}px`;
+      dom.exportResolution.textContent = `${Math.round(width * state.export.scale)} × ${Math.round(height * state.export.scale)}`;
+    };
+
+    const updateGradient = () => {
+      const gradientCss = gradientToCss(state.gradient);
+      const texture = textureDefinitions[state.textures.type] || "";
+      dom.previewCanvas.style.backgroundImage = texture
+        ? `${gradientCss}, ${texture}`
+        : gradientCss;
+      dom.previewGrid.style.opacity = state.canvas.gridOpacity;
+      dom.previewGrid.style.mixBlendMode = "screen";
+      dom.exportGradientLabel.textContent = `${state.gradient.type.charAt(0).toUpperCase() + state.gradient.type.slice(1)} ${state.gradient.angle}°`;
+      dom.gradientAngleValue.textContent = `${state.gradient.angle}°`;
+    };
+
+    const parseColor = (input) => {
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.fillStyle = input;
+      return ctx.fillStyle;
+    };
+
+    const updateShadow = () => {
+      const color = parseColor(state.shadow.color);
+      dom.shadowColorPreview.style.background = color;
+      dom.previewCanvas.style.boxShadow = `${state.shadow.offsetX}px ${state.shadow.offsetY}px ${state.shadow.blur}px ${state.shadow.spread}px ${color}`;
+      const inset = state.shadow.stroke.size
+        ? `inset 0 0 0 ${state.shadow.stroke.size}px rgba(255, 255, 255, ${state.shadow.stroke.opacity})`
+        : "";
+      dom.previewCanvas.style.border = inset ? "1px solid rgba(255, 255, 255, 0.04)" : "1px solid rgba(255, 255, 255, 0.04)";
+      dom.previewCanvas.style.boxShadow += inset ? `, ${inset}` : "";
+      dom.shadowBlurValue.textContent = `${state.shadow.blur}px`;
+      dom.shadowSpreadValue.textContent = `${state.shadow.spread}px`;
+      dom.shadowOffsetXValue.textContent = `${state.shadow.offsetX}px`;
+      dom.shadowOffsetYValue.textContent = `${state.shadow.offsetY}px`;
+    };
+
+    const updateImageTransform = () => {
+      const image = dom.imageWrapper.querySelector("img");
+      if (!image) return;
+      const scale = state.image.scale;
+      const rotation = state.image.rotation;
+      const borderRadius = state.image.borderRadius;
+      image.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+      image.style.borderRadius = `${borderRadius}px`;
+      dom.imageWrapper.style.borderRadius = `${borderRadius}px`;
+      dom.previewLayer.style.borderRadius = `${Math.max(state.canvas.radius - 10, borderRadius)}px`;
+      dom.imageScaleValue.textContent = `${Math.round(scale * 100)}%`;
+      dom.imageRotationValue.textContent = `${rotation}°`;
+      dom.imageBorderRadiusValue.textContent = `${borderRadius}px`;
+    };
+
+    const updateImageFilters = () => {
+      const image = dom.imageWrapper.querySelector("img");
+      if (!image) return;
+      const { brightness, contrast, saturation, temperature, vignette } = state.image;
+      const temperatureFilter = temperature >= 0 ? `sepia(${temperature / 200}) saturate(${1 + temperature / 200})` : `sepia(${Math.abs(temperature) / 200}) hue-rotate(${temperature}deg)`;
+      image.style.filter = `brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) ${temperatureFilter}`;
+      dom.imageBrightnessValue.textContent = brightness.toFixed(2);
+      dom.imageContrastValue.textContent = contrast.toFixed(2);
+      dom.imageSaturationValue.textContent = saturation.toFixed(2);
+      dom.imageTemperatureValue.textContent = temperature;
+      dom.imageVignetteValue.textContent = `${Math.round(vignette * 100)}%`;
+      dom.imageWrapper.style.boxShadow = state.image.shadowEnabled
+        ? `0 ${state.image.shadowBlur}px ${state.image.shadowBlur * 2}px ${state.image.shadowSpread}px ${state.image.shadowColor.replace(/\d?\.\d+\)/, `${state.image.shadowOpacity})`)}`
+        : "none";
+      dom.imageWrapper.style.setProperty("--vignette", vignette);
+      dom.imageWrapper.style.maskImage = vignette > 0
+        ? `radial-gradient(circle at center, rgba(0, 0, 0, 1) ${Math.max(0, 100 - vignette * 100)}%, rgba(0, 0, 0, 0) 100%)`
+        : "none";
+    };
+
+    const updateImageEffects = () => {
+      const image = dom.imageWrapper.querySelector("img");
+      if (!image) return;
+      dom.imageWrapper.style.boxShadow = state.image.shadowEnabled
+        ? `0 ${state.image.shadowBlur}px ${state.image.shadowBlur * 2}px ${state.image.shadowSpread}px ${state.image.shadowColor.replace(/\d?\.\d+\)/, `${state.image.shadowOpacity})`)}`
+        : "none";
+      dom.imageShadowBlurValue.textContent = `${state.image.shadowBlur}px`;
+      dom.imageShadowSpreadValue.textContent = `${state.image.shadowSpread}px`;
+      dom.imageShadowOpacityValue.textContent = `${Math.round(state.image.shadowOpacity * 100)}%`;
+      dom.imageShadowColorPreview.style.background = parseColor(state.image.shadowColor);
+      if (state.image.reflection) {
+        createReflection(image);
+      } else {
+        removeReflection();
+      }
+    };
+
+    const createReflection = (image) => {
+      removeReflection();
+      const reflection = image.cloneNode(true);
+      reflection.classList.add("reflection-image");
+      reflection.style.transform = `scale(${state.image.scale}) rotate(${state.image.rotation}deg) scaleY(-1)`;
+      reflection.style.opacity = "0.18";
+      reflection.style.filter = `${image.style.filter} blur(1px)`;
+      reflection.style.marginTop = "24px";
+      reflection.style.maskImage = "linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0))";
+      reflection.style.pointerEvents = "none";
+      dom.imageWrapper.append(reflection);
+    };
+
+    const removeReflection = () => {
+      const reflection = dom.imageWrapper.querySelector(".reflection-image");
+      if (reflection) reflection.remove();
+    };
+
+    const updateAllSliderLabels = () => {
+      updateSliderValue(dom.canvasWidth, dom.canvasWidthValue, "px");
+      updateSliderValue(dom.canvasHeight, dom.canvasHeightValue, "px");
+      updateSliderValue(dom.canvasRadius, dom.canvasRadiusValue, "px");
+      updateSliderValue(dom.gridOpacity, dom.gridOpacityValue, "%", (v) => Math.round(v * 100));
+      updateSliderValue(dom.textureIntensity, dom.textureIntensityValue, "%", (v) => Math.round(v * 100));
+      updateSliderValue(dom.backgroundBlur, dom.backgroundBlurValue, "px");
+      updateSliderValue(dom.gradientAngle, dom.gradientAngleValue, "°");
+      updateSliderValue(dom.shadowBlur, dom.shadowBlurValue, "px");
+      updateSliderValue(dom.shadowSpread, dom.shadowSpreadValue, "px");
+      updateSliderValue(dom.shadowOffsetX, dom.shadowOffsetXValue, "px");
+      updateSliderValue(dom.shadowOffsetY, dom.shadowOffsetYValue, "px");
+      updateSliderValue(dom.imageScale, dom.imageScaleValue, "%", (v) => Math.round(v * 100));
+      updateSliderValue(dom.imageRotation, dom.imageRotationValue, "°");
+      updateSliderValue(dom.imageBorderRadius, dom.imageBorderRadiusValue, "px");
+      updateSliderValue(dom.imageBrightness, dom.imageBrightnessValue, "");
+      updateSliderValue(dom.imageContrast, dom.imageContrastValue, "");
+      updateSliderValue(dom.imageSaturation, dom.imageSaturationValue, "");
+      updateSliderValue(dom.imageTemperature, dom.imageTemperatureValue, "");
+      updateSliderValue(dom.imageVignette, dom.imageVignetteValue, "%", (v) => Math.round(v * 100));
+      updateSliderValue(dom.imageShadowBlur, dom.imageShadowBlurValue, "px");
+      updateSliderValue(dom.imageShadowSpread, dom.imageShadowSpreadValue, "px");
+      updateSliderValue(dom.imageShadowOpacity, dom.imageShadowOpacityValue, "%", (v) => Math.round(v * 100));
+    };
+
+    const addGradientStop = () => {
+      if (state.gradient.stops.length >= 6) return;
+      const position = Math.round(100 / (state.gradient.stops.length + 1) * state.gradient.stops.length);
+      state.gradient.stops.push({ color: "#ffffff", position });
+      renderGradientStops();
+      updateGradient();
+    };
+
+    const handleFileUpload = (file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        displayImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    };
+
+    const displayImage = (src) => {
+      const existingImage = dom.imageWrapper.querySelector("img");
+      if (existingImage) existingImage.remove();
+      const image = new Image();
+      image.src = src;
+      image.onload = () => {
+        dom.imagePlaceholder.style.display = "none";
+        image.alt = "Uploaded screenshot";
+        image.draggable = false;
+        dom.imageWrapper.prepend(image);
+        updateImageTransform();
+        updateImageFilters();
+        updateImageEffects();
+        analyzeImagePalette(image);
+      };
+    };
+
+    const analyzeImagePalette = (image) => {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      const width = (canvas.width = Math.min(image.naturalWidth, 600));
+      const height = (canvas.height = Math.min(image.naturalHeight, 600));
+      context.drawImage(image, 0, 0, width, height);
+      const data = context.getImageData(0, 0, width, height).data;
+      const colors = {};
+      const step = 10;
+      for (let i = 0; i < data.length; i += step * 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const key = `${Math.round(r / 16) * 16},${Math.round(g / 16) * 16},${Math.round(b / 16) * 16}`;
+        colors[key] = (colors[key] || 0) + 1;
+      }
+      const sorted = Object.entries(colors)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([key]) => {
+          const [r, g, b] = key.split(",").map(Number);
+          return `rgb(${r}, ${g}, ${b})`;
+        });
+      if (sorted.length >= 2) {
+        const palette = sorted.map((color, index) => ({
+          color,
+          position: Math.round((index / (sorted.length - 1)) * 100),
+        }));
+        gradientHistory.push(JSON.parse(JSON.stringify(state.gradient.stops)));
+        state.gradient.stops = palette;
+        renderGradientStops();
+        updateGradient();
+      }
+      updatePaletteBadges(sorted);
+    };
+
+    const updatePaletteBadges = (colors) => {
+      let badges = $("#paletteBadges");
+      if (!badges) {
+        badges = createElement("div", "badges");
+        badges.id = "paletteBadges";
+        const section = createElement("div", "section");
+        section.append(createElement("h2", null, "Detected Palette"));
+        const group = createElement("div", "control-group");
+        group.append(badges);
+        section.append(group);
+        $(".panel-content").insertBefore(section, $("#gradientSection"));
+      }
+      badges.innerHTML = "";
+      colors.forEach((color, index) => {
+        const badge = createElement("div", "badge", `Tone ${index + 1}`);
+        badge.style.background = color;
+        badge.style.color = "#0b1220";
+        badges.append(badge);
+      });
+      if (!colors.length) {
+        badges.textContent = "Upload an image to auto-detect key colors.";
+      }
+    };
+
+    const registerCanvasListeners = () => {
+      dom.canvasWidth.addEventListener("input", (event) => {
+        state.canvas.width = parseInt(event.target.value, 10);
+        updateCanvasDimensions();
+      });
+      dom.canvasHeight.addEventListener("input", (event) => {
+        state.canvas.height = parseInt(event.target.value, 10);
+        updateCanvasDimensions();
+      });
+      dom.canvasRadius.addEventListener("input", (event) => {
+        state.canvas.radius = parseInt(event.target.value, 10);
+        updateCanvasDimensions();
+        updateImageTransform();
+      });
+      dom.gridOpacity.addEventListener("input", (event) => {
+        state.canvas.gridOpacity = parseFloat(event.target.value);
+        updateCanvasDimensions();
+        updateGradient();
+      });
+      dom.gridSize.addEventListener("input", (event) => {
+        state.canvas.gridSize = parseInt(event.target.value, 10);
+        updateCanvasDimensions();
+      });
+      dom.textureIntensity.addEventListener("input", (event) => {
+        state.canvas.textureIntensity = parseFloat(event.target.value);
+        dom.previewCanvas.style.opacity = 1 - state.canvas.textureIntensity * 0.25;
+        updateCanvasDimensions();
+      });
+      dom.backgroundBlur.addEventListener("input", (event) => {
+        state.canvas.backgroundBlur = parseInt(event.target.value, 10);
+        updateCanvasDimensions();
+      });
+    };
+
+    const registerGradientListeners = () => {
+      dom.gradientType.addEventListener("change", (event) => {
+        state.gradient.type = event.target.value;
+        updateGradient();
+      });
+      dom.gradientAngle.addEventListener("input", (event) => {
+        state.gradient.angle = parseInt(event.target.value, 10);
+        updateGradient();
+      });
+      $("#addStop").addEventListener("click", addGradientStop);
+    };
+
+    const registerShadowListeners = () => {
+      dom.shadowBlur.addEventListener("input", (event) => {
+        state.shadow.blur = parseInt(event.target.value, 10);
+        updateShadow();
+      });
+      dom.shadowSpread.addEventListener("input", (event) => {
+        state.shadow.spread = parseInt(event.target.value, 10);
+        updateShadow();
+      });
+      dom.shadowOffsetX.addEventListener("input", (event) => {
+        state.shadow.offsetX = parseInt(event.target.value, 10);
+        updateShadow();
+      });
+      dom.shadowOffsetY.addEventListener("input", (event) => {
+        state.shadow.offsetY = parseInt(event.target.value, 10);
+        updateShadow();
+      });
+      dom.shadowColor.addEventListener("input", (event) => {
+        state.shadow.color = event.target.value;
+        updateShadow();
+        renderShadowPresets();
+      });
+    };
+
+    const registerImageListeners = () => {
+      dom.imageScale.addEventListener("input", (event) => {
+        state.image.scale = parseFloat(event.target.value);
+        updateImageTransform();
+      });
+      dom.imageRotation.addEventListener("input", (event) => {
+        state.image.rotation = parseInt(event.target.value, 10);
+        updateImageTransform();
+      });
+      dom.imageBorderRadius.addEventListener("input", (event) => {
+        state.image.borderRadius = parseInt(event.target.value, 10);
+        updateImageTransform();
+      });
+      dom.imageBrightness.addEventListener("input", (event) => {
+        state.image.brightness = parseFloat(event.target.value);
+        updateImageFilters();
+      });
+      dom.imageContrast.addEventListener("input", (event) => {
+        state.image.contrast = parseFloat(event.target.value);
+        updateImageFilters();
+      });
+      dom.imageSaturation.addEventListener("input", (event) => {
+        state.image.saturation = parseFloat(event.target.value);
+        updateImageFilters();
+      });
+      dom.imageTemperature.addEventListener("input", (event) => {
+        state.image.temperature = parseInt(event.target.value, 10);
+        updateImageFilters();
+      });
+      dom.imageVignette.addEventListener("input", (event) => {
+        state.image.vignette = parseFloat(event.target.value);
+        updateImageFilters();
+      });
+      dom.imageReflection.addEventListener("change", (event) => {
+        state.image.reflection = event.target.checked;
+        updateImageEffects();
+      });
+      dom.imageShadowToggle.addEventListener("change", (event) => {
+        state.image.shadowEnabled = event.target.checked;
+        updateImageEffects();
+      });
+      dom.imageShadowBlur.addEventListener("input", (event) => {
+        state.image.shadowBlur = parseInt(event.target.value, 10);
+        updateImageEffects();
+      });
+      dom.imageShadowSpread.addEventListener("input", (event) => {
+        state.image.shadowSpread = parseInt(event.target.value, 10);
+        updateImageEffects();
+      });
+      dom.imageShadowOpacity.addEventListener("input", (event) => {
+        state.image.shadowOpacity = parseFloat(event.target.value);
+        updateImageEffects();
+      });
+      dom.imageShadowColor.addEventListener("input", (event) => {
+        state.image.shadowColor = event.target.value;
+        updateImageEffects();
+      });
+    };
+
+    const registerExportListeners = () => {
+      dom.exportFormat.addEventListener("change", (event) => {
+        state.export.format = event.target.value;
+      });
+      dom.exportScale.addEventListener("change", (event) => {
+        state.export.scale = parseFloat(event.target.value);
+        updateCanvasDimensions();
+      });
+      dom.copySettings.addEventListener("click", copySettingsToClipboard);
+      dom.downloadImage.addEventListener("click", exportImage);
+    };
+
+    const registerGlobalListeners = () => {
+      dom.dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dom.previewCanvas.classList.add("drag-over");
+      });
+      dom.dropZone.addEventListener("dragleave", () => {
+        dom.previewCanvas.classList.remove("drag-over");
+      });
+      dom.dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dom.previewCanvas.classList.remove("drag-over");
+        const file = event.dataTransfer.files[0];
+        if (file && file.type.startsWith("image/")) {
+          handleFileUpload(file);
+        }
+      });
+      dom.imageInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) handleFileUpload(file);
+      });
+      document.addEventListener("paste", (event) => {
+        const items = event.clipboardData.items;
+        for (const item of items) {
+          if (item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) handleFileUpload(file);
+          }
+        }
+      });
+      dom.resetSettings.addEventListener("click", resetSettings);
+      dom.toggleGuides.addEventListener("click", toggleGuides);
+    };
+
+    const copySettingsToClipboard = async () => {
+      const payload = {
+        canvas: state.canvas,
+        gradient: state.gradient,
+        shadow: state.shadow,
+        image: state.image,
+        export: state.export,
+      };
+      const text = JSON.stringify(payload, null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Configuration copied to clipboard");
+      } catch (error) {
+        console.error("Clipboard copy failed", error);
+        showToast("Unable to copy settings", true);
+      }
+    };
+
+    const exportImage = async () => {
+      const { default: html2canvas } = await import("https://cdn.skypack.dev/html2canvas@1.4.1");
+      const canvas = await html2canvas(dom.previewCanvas, {
+        backgroundColor: null,
+        scale: state.export.scale,
+        useCORS: true,
+        onclone: (clonedDocument) => {
+          const clonedCanvas = clonedDocument.querySelector("#previewCanvas");
+          clonedCanvas.style.transform = "none";
+          clonedCanvas.style.boxShadow = dom.previewCanvas.style.boxShadow;
+        },
+      });
+      const format = state.export.format;
+      const mimeType = format === "png" ? "image/png" : format === "jpeg" ? "image/jpeg" : "image/webp";
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `snapshotpro-${Date.now()}.${format}`;
+          link.click();
+          URL.revokeObjectURL(url);
+          showToast("Download started");
+        },
+        mimeType,
+        format === "jpeg" ? 0.95 : 1
+      );
+    };
+
+    const showToast = (message, isError = false) => {
+      let toast = document.querySelector(".toast");
+      if (!toast) {
+        toast = createElement("div", "toast");
+        toast.style.position = "fixed";
+        toast.style.bottom = "24px";
+        toast.style.right = "24px";
+        toast.style.padding = "16px 20px";
+        toast.style.borderRadius = "12px";
+        toast.style.background = "rgba(12, 18, 28, 0.9)";
+        toast.style.border = "1px solid rgba(88, 166, 255, 0.35)";
+        toast.style.color = "#fff";
+        toast.style.fontSize = "0.9rem";
+        toast.style.letterSpacing = "0.03em";
+        toast.style.boxShadow = "0 20px 40px rgba(10, 16, 28, 0.35)";
+        toast.style.zIndex = "999";
+        document.body.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.style.borderColor = isError ? "rgba(255, 95, 86, 0.6)" : "rgba(88, 166, 255, 0.35)";
+      toast.style.background = isError ? "rgba(45, 15, 24, 0.9)" : "rgba(12, 18, 28, 0.9)";
+      toast.style.opacity = "1";
+      toast.style.transform = "translateY(0)";
+      setTimeout(() => {
+        toast.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(10px)";
+      }, 2400);
+    };
+
+    const resetSettings = () => {
+      Object.assign(state.canvas, {
+        width: 1080,
+        height: 640,
+        radius: 34,
+        gridOpacity: 0.35,
+        gridSize: 40,
+        textureIntensity: 0.18,
+        backgroundBlur: 16,
+      });
+      Object.assign(state.gradient, {
+        type: "linear",
+        angle: 135,
+        stops: [
+          { color: "#0b1f3a", position: 0 },
+          { color: "#104c88", position: 42 },
+          { color: "#5ac8fa", position: 100 },
+        ],
+      });
+      Object.assign(state.shadow, {
+        blur: 42,
+        spread: 12,
+        offsetX: 0,
+        offsetY: 48,
+        color: "rgba(10, 12, 23, 0.7)",
+        stroke: { size: 1, opacity: 0.22 },
+      });
+      Object.assign(state.image, {
+        scale: 1,
+        rotation: 0,
+        borderRadius: 16,
+        brightness: 1,
+        contrast: 1,
+        saturation: 1,
+        temperature: 0,
+        vignette: 0,
+        shadowEnabled: true,
+        reflection: false,
+        shadowBlur: 18,
+        shadowSpread: 4,
+        shadowOpacity: 0.4,
+        shadowColor: "rgba(8, 10, 24, 0.5)",
+      });
+      state.export.format = "png";
+      state.export.scale = 1;
+      state.textures.type = "none";
+      dom.canvasWidth.value = state.canvas.width;
+      dom.canvasHeight.value = state.canvas.height;
+      dom.canvasRadius.value = state.canvas.radius;
+      dom.gridOpacity.value = state.canvas.gridOpacity;
+      dom.gridSize.value = state.canvas.gridSize;
+      dom.textureIntensity.value = state.canvas.textureIntensity;
+      dom.backgroundBlur.value = state.canvas.backgroundBlur;
+      dom.gradientType.value = state.gradient.type;
+      dom.gradientAngle.value = state.gradient.angle;
+      dom.shadowBlur.value = state.shadow.blur;
+      dom.shadowSpread.value = state.shadow.spread;
+      dom.shadowOffsetX.value = state.shadow.offsetX;
+      dom.shadowOffsetY.value = state.shadow.offsetY;
+      dom.shadowColor.value = state.shadow.color;
+      dom.imageScale.value = state.image.scale;
+      dom.imageRotation.value = state.image.rotation;
+      dom.imageBorderRadius.value = state.image.borderRadius;
+      dom.imageBrightness.value = state.image.brightness;
+      dom.imageContrast.value = state.image.contrast;
+      dom.imageSaturation.value = state.image.saturation;
+      dom.imageTemperature.value = state.image.temperature;
+      dom.imageVignette.value = state.image.vignette;
+      dom.imageReflection.checked = state.image.reflection;
+      dom.imageShadowToggle.checked = state.image.shadowEnabled;
+      dom.imageShadowBlur.value = state.image.shadowBlur;
+      dom.imageShadowSpread.value = state.image.shadowSpread;
+      dom.imageShadowOpacity.value = state.image.shadowOpacity;
+      dom.imageShadowColor.value = state.image.shadowColor;
+      dom.exportFormat.value = state.export.format;
+      dom.exportScale.value = state.export.scale;
+      renderGradientStops();
+      renderShadowPresets();
+      renderStrokeOptions();
+      updateAllSliderLabels();
+      updateCanvasDimensions();
+      updateGradient();
+      updateShadow();
+      updateImageTransform();
+      updateImageFilters();
+      updateImageEffects();
+      renderTextureOptions();
+      showToast("Settings restored");
+    };
+
+    const toggleGuides = () => {
+      const isVisible = dom.previewGrid.style.display !== "none";
+      dom.previewGrid.style.display = isVisible ? "none" : "block";
+      dom.toggleGuides.textContent = isVisible ? "Guides" : "Guides ✔";
+    };
+
+    const applyPreset = (preset) => {
+      state.gradient = JSON.parse(JSON.stringify(preset.gradient));
+      state.shadow = { ...state.shadow, ...preset.shadow };
+      state.canvas = { ...state.canvas, ...preset.canvas };
+      dom.gradientType.value = state.gradient.type;
+      dom.gradientAngle.value = state.gradient.angle;
+      dom.shadowBlur.value = state.shadow.blur;
+      dom.shadowSpread.value = state.shadow.spread;
+      dom.shadowOffsetX.value = state.shadow.offsetX;
+      dom.shadowOffsetY.value = state.shadow.offsetY;
+      dom.shadowColor.value = state.shadow.color;
+      dom.canvasWidth.value = state.canvas.width;
+      dom.canvasHeight.value = state.canvas.height;
+      dom.canvasRadius.value = state.canvas.radius;
+      dom.gridOpacity.value = state.canvas.gridOpacity;
+      dom.gridSize.value = state.canvas.gridSize;
+      dom.textureIntensity.value = state.canvas.textureIntensity;
+      dom.backgroundBlur.value = state.canvas.backgroundBlur;
+      renderGradientStops();
+      renderShadowPresets();
+      updateAllSliderLabels();
+      updateCanvasDimensions();
+      updateGradient();
+      updateShadow();
+      showToast(`Preset "${preset.name}" applied`);
+    };
+
+    const initializeTabs = () => {
+      const buttons = $$("button", dom.imageTabs);
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          buttons.forEach((btn) => btn.classList.remove("active"));
+          button.classList.add("active");
+          $$(".tab-content").forEach((content) => {
+            content.style.display = "none";
+          });
+          const tabId = button.dataset.tab;
+          $("#tab" + tabId.charAt(0).toUpperCase() + tabId.slice(1)).style.display = "block";
+        });
+      });
+    };
+
+    const addKeyboardShortcuts = () => {
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "z" && (event.metaKey || event.ctrlKey)) {
+          if (gradientHistory.length) {
+            const previous = gradientHistory.pop();
+            state.gradient.stops = previous;
+            renderGradientStops();
+            updateGradient();
+            showToast("Gradient undo");
+          }
+        }
+        if (event.key === "s" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          exportImage();
+        }
+      });
+    };
+
+    const animateGlows = () => {
+      const animate = () => {
+        const time = Date.now() * 0.0003;
+        const x1 = Math.sin(time) * 40;
+        const y1 = Math.cos(time * 1.2) * 30;
+        const x2 = Math.cos(time * 0.8) * 60;
+        const y2 = Math.sin(time * 0.6) * 50;
+        dom.glowOne.style.transform = `translate(${x1}px, ${y1}px)`;
+        dom.glowTwo.style.transform = `translate(${x2}px, ${y2}px)`;
+        requestAnimationFrame(animate);
+      };
+      animate();
+    };
+
+    const init = () => {
+      renderPresetCards();
+      renderGradientStops();
+      renderPaletteList();
+      renderShadowPresets();
+      renderStrokeOptions();
+      renderTextureOptions();
+      renderImageFilterPresets();
+      renderImageEffectPresets();
+      updateCanvasDimensions();
+      updateGradient();
+      updateShadow();
+      updateImageTransform();
+      updateImageFilters();
+      updateImageEffects();
+      updateAllSliderLabels();
+      registerCanvasListeners();
+      registerGradientListeners();
+      registerShadowListeners();
+      registerImageListeners();
+      registerExportListeners();
+      registerGlobalListeners();
+      initializeTabs();
+      addKeyboardShortcuts();
+      animateGlows();
+      showToast("Ready to style your screenshot");
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
