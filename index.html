@@ -2098,11 +2098,31 @@
         });
     };
 
+    const ensureSection = (id, headingText) => {
+      let section = $(`#${id}`);
+      if (!section) {
+        section = createElement("div", "section");
+        section.id = id;
+        const heading = createElement("h2", null, headingText);
+        const group = createElement("div", "control-group");
+        section.append(heading, group);
+        const gradientSection = $("#gradientSection");
+        const insertBeforeNode = id === "textureSection" ? gradientSection.nextSibling : gradientSection;
+        $(".panel-content").insertBefore(section, insertBeforeNode);
+      }
+      return section.querySelector(".control-group");
+    };
+
     const renderTextureOptions = () => {
-      const textureSection = createElement("div", "section");
-      const heading = createElement("h2", null, "Atmospheric Textures");
-      const group = createElement("div", "control-group");
-      const previewGrid = createElement("div", "texture-preview");
+      const group = ensureSection("textureSection", "Atmospheric Textures");
+      let previewGrid = group.querySelector(".texture-preview");
+      let info = group.querySelector("p");
+
+      if (!previewGrid) {
+        previewGrid = createElement("div", "texture-preview");
+        group.append(previewGrid);
+      }
+      previewGrid.innerHTML = "";
 
       textureCards.forEach((texture) => {
         const card = createElement("div", "texture-card");
@@ -2124,26 +2144,28 @@
         previewGrid.append(card);
       });
 
-      const info = createElement(
-        "p",
-        null,
-        "Blend ambient textures with your gradient to create cinematic depth. Each preset is tuned to complement the color palette without overwhelming your screenshot."
-      );
-      info.style.margin = "0";
-      info.style.color = "var(--text-muted)";
-      info.style.fontSize = "0.85rem";
-      info.style.lineHeight = "1.6";
-
-      group.append(previewGrid, info);
-      textureSection.append(heading, group);
-      $(".panel-content").insertBefore(textureSection, $("#gradientSection").nextSibling);
+      if (!info) {
+        info = createElement(
+          "p",
+          null,
+          "Blend ambient textures with your gradient to create cinematic depth. Each preset is tuned to complement the color palette without overwhelming your screenshot."
+        );
+        info.style.margin = "0";
+        info.style.color = "var(--text-muted)";
+        info.style.fontSize = "0.85rem";
+        info.style.lineHeight = "1.6";
+        group.append(info);
+      }
     };
 
     const renderImageFilterPresets = () => {
-      const section = createElement("div", "section");
-      const heading = createElement("h2", null, "Filter Presets");
-      const group = createElement("div", "control-group");
-      const chips = createElement("div", "chip-list");
+      const group = ensureSection("filterPresetsSection", "Filter Presets");
+      let chips = group.querySelector(".chip-list");
+      if (!chips) {
+        chips = createElement("div", "chip-list");
+        group.append(chips);
+      }
+      chips.innerHTML = "";
 
       imageFilters.forEach((filter) => {
         const chip = createElement("div", "chip", filter.name);
@@ -2167,17 +2189,16 @@
         });
         chips.append(chip);
       });
-
-      group.append(chips);
-      section.append(heading, group);
-      $(".panel-content").insertBefore(section, $("#gradientSection"));
     };
 
     const renderImageEffectPresets = () => {
-      const section = createElement("div", "section");
-      const heading = createElement("h2", null, "Image Effects");
-      const group = createElement("div", "control-group");
-      const chips = createElement("div", "chip-list");
+      const group = ensureSection("imageEffectsSection", "Image Effects");
+      let chips = group.querySelector(".chip-list");
+      if (!chips) {
+        chips = createElement("div", "chip-list");
+        group.append(chips);
+      }
+      chips.innerHTML = "";
 
       imageEffectPresets.forEach((effect) => {
         const chip = createElement("div", "chip", effect.name);
@@ -2205,10 +2226,6 @@
         });
         chips.append(chip);
       });
-
-      group.append(chips);
-      section.append(heading, group);
-      $(".panel-content").insertBefore(section, $("#gradientSection"));
     };
 
     const updateCanvasDimensions = () => {
